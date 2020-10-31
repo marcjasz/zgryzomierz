@@ -95,3 +95,29 @@ class CaptureManager:
         self._video_writer.write(self._frame)
 
 
+class WindowManager:
+    def __init__(self, window_name, keypress_callback=None):
+        self.keypress_callback = keypress_callback
+        self._window_name = window_name
+        self._window_created = False
+
+    @property
+    def window_created(self):
+        return self._window_created
+
+    def create_window(self):
+        cv2.namedWindow(self._window_name)
+        self._window_created = True
+
+    def show(self, frame):
+        cv2.imshow(self._window_name, frame)
+    
+    def destroy_window(self):
+        cv2.destroyWindow(self._window_name)
+        self._window_created = False
+
+    def process_events(self):
+        keycode = cv2.waitKey(1)
+        if self.keypress_callback is not None and keycode != -1:
+            keycode &= 0xFF
+            self.keypress_callback(keycode)

@@ -1,26 +1,39 @@
 import cv2
+from managers import WindowManager, CaptureManager
 
-videoCapture = cv2.VideoCapture('data/P1.mp4')
-fps = videoCapture.get(cv2.CAP_PROP_FPS)
-size = (
-    videoCapture.get(cv2.CAP_PROP_FRAME_WIDTH),
-    videoCapture.get(cv2.CAP_PROP_FRAME_HEIGHT)
-)
+class App:
+    def __init__(self):
+        self._window_manager = WindowManager(
+            'App', self.on_keypress
+        )
+        self._capture_manager = CaptureManager(
+            cv2.VideoCapture('data/P1.mp4'), self._window_manager
+        )
 
-print(fps, size)
+    def run(self):
+        self._window_manager.create_window()
+        while self._window_manager.window_created:
+            self._capture_manager.enter_frame()
+            frame = self._capture_manager.frame
 
-clicked = False
+            self._capture_manager.exit_frame()
+            self._window_manager.process_events()
 
-def onMouse(event, x, y, flags, param):
-    global clicked
-    if event == cv2.EVENT_LBUTTONUP:
-        clicked = True
+    def on_keypress(self, keycode):
+        if keycode == 32: # space
+            print("screenshot created")
+            self._capture_manager.write_image('out/screenshot.png')
+        elif keycode == 9: # tab
+            if not self._capture_manager.is_writing_video:
+                print("recording started")
+                self._capture_manager.start_writing_video('out/screencast.avi')
+            else:
+                print("recording finished")
+                self._capture_manager.stop_writing_video()
+        elif keycode == 27: #escape
+            print("exiting")
+            self._window_manager.destroy_window()
 
-cv2.namedWindow('AAA')
-cv2.setMouseCallback('AAA', onMouse)
 
-success, frame = videoCapture.read()
-while success and cv2.waitKey(1) == -1:
-    cv2.imshow('AAA', frame)
-    if clicked:
-        success, frame = videoCapture.read()
+if __name__ == "__main__":
+    App().run()
