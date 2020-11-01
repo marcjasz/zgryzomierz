@@ -5,7 +5,8 @@ import time
 class CaptureManager:
     def __init__(self,
                  capture,
-                 preview_window_manager = None):
+                 preview_window_manager = None,
+                 scale = 1.0):
         self.preview_window_manager = preview_window_manager
         self._capture = capture
         self._entered_frame = False
@@ -17,11 +18,14 @@ class CaptureManager:
         self._start_time = None
         self._frames_elapsed = 0
         self._fps_estimate = None
+        self._size = (int(scale * self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                      int(scale * self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
     @property
     def frame(self):
         if self._entered_frame and self._frame is None:
             _, self._frame = self._capture.retrieve()
+            self._frame = cv2.resize(self._frame, self._size, interpolation = cv2.INTER_AREA)
         return self._frame
 
     @property
@@ -88,9 +92,7 @@ class CaptureManager:
                     return
                 else:
                     fps = self._fps_estimate
-            size = (int(self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                    int(self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-            self._video_writer = cv2.VideoWriter(self._video_filename, self._video_encoding, fps, size)
+            self._video_writer = cv2.VideoWriter(self._video_filename, self._video_encoding, fps, self._size)
 
         self._video_writer.write(self._frame)
 

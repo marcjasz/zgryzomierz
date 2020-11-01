@@ -7,7 +7,7 @@ class App:
             'App', self.on_keypress
         )
         self._capture_manager = CaptureManager(
-            cv2.VideoCapture('data/P1.mp4'), self._window_manager
+            cv2.VideoCapture('data/P1.mp4'), self._window_manager, scale = 0.5
         )
 
     def run(self):
