@@ -4,7 +4,7 @@ from managers import WindowManager, CaptureManager
 class App:
     def __init__(self):
         self._window_manager = WindowManager(
-            'App', self.on_keypress, self.draw_line
+            'App', self.on_keypress  #, self.draw_line
         )
         self._capture_manager = CaptureManager(
             cv2.VideoCapture('data/P1.mp4'), self._window_manager, scale = 0.5

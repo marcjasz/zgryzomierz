@@ -149,7 +149,8 @@ class WindowManager:
             self._ref = [(x, y)]
         elif event == cv2.EVENT_LBUTTONUP:
             self._ref.append((x, y))
-            self.draw(self._ref)
+            print(self._ref)
+            #self.draw(self._ref)
 
 
 
