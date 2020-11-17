@@ -2,6 +2,9 @@ import cv2
 import numpy
 import time
 
+from sympy import false, true
+
+
 class CaptureManager:
     def __init__(self,
                  capture,
@@ -15,6 +18,8 @@ class CaptureManager:
         self._video_filename = None
         self._video_encoding = None
         self._video_writer = None
+        self._video_start = None
+        self.video_start = true
         self._start_time = None
         self._frames_elapsed = 0
         self._fps_estimate = None
@@ -35,6 +40,10 @@ class CaptureManager:
     @property
     def is_writing_video(self):
         return self._video_filename is not None
+
+    @property
+    def is_starting_video(self):
+        return self._video_start is not None
 
     def enter_frame(self):
         assert not self._entered_frame, 'previous frame was not exited'
@@ -81,6 +90,14 @@ class CaptureManager:
         self._video_encoding = None
         self._video_writer = None
 
+    def stop_video(self):
+        self.video_start = false
+        self._video_start = ''
+
+    def start_video(self):
+        self.video_start = true
+        self._video_start = None
+
     def _write_video_frame(self):
         if not self.is_writing_video:
             return
@@ -98,8 +115,10 @@ class CaptureManager:
 
 
 class WindowManager:
-    def __init__(self, window_name, keypress_callback=None):
+    def __init__(self, window_name, keypress_callback=None, draw=None, ref=[]):
         self.keypress_callback = keypress_callback
+        self.draw = draw
+        self._ref = ref
         self._window_name = window_name
         self._window_created = False
 
@@ -109,6 +128,7 @@ class WindowManager:
 
     def create_window(self):
         cv2.namedWindow(self._window_name)
+        cv2.setMouseCallback(self._window_name, self.click)
         self._window_created = True
 
     def show(self, frame):
@@ -123,3 +143,13 @@ class WindowManager:
         if self.keypress_callback is not None and keycode != -1:
             keycode &= 0xFF
             self.keypress_callback(keycode)
+
+    def click(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self._ref = [(x, y)]
+        elif event == cv2.EVENT_LBUTTONUP:
+            self._ref.append((x, y))
+            self.draw(self._ref)
+
+
+
