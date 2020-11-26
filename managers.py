@@ -2,15 +2,13 @@ import cv2
 import numpy
 import time
 
-from sympy import false, true
-
-
 class CaptureManager:
     def __init__(self,
                  capture,
                  preview_window_manager = None,
                  scale = 1.0):
         self.preview_window_manager = preview_window_manager
+        self.paused = False
         self._capture = capture
         self._entered_frame = False
         self._frame = None
@@ -19,10 +17,10 @@ class CaptureManager:
         self._video_encoding = None
         self._video_writer = None
         self._video_start = None
-        self.video_start = true
         self._start_time = None
         self._frames_elapsed = 0
         self._fps_estimate = None
+        self._lines_to_draw = []
         self._size = (int(scale * self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
                       int(scale * self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
@@ -49,13 +47,16 @@ class CaptureManager:
         assert not self._entered_frame, 'previous frame was not exited'
 
         if self._capture is not None:
-            self._entered_frame = self._capture.grab()
-    
+            self._entered_frame = self.paused or self._capture.grab()
+
+    def add_lines(self, lines):
+        self._lines_to_draw = lines
+
     def exit_frame(self):
         if self.frame is None:
             self._entered_frame = False
             return
-        
+
         if self._frames_elapsed == 0:
             self._start_time = time.time()
         else:
@@ -64,17 +65,25 @@ class CaptureManager:
         self._frames_elapsed += 1
 
         if self.preview_window_manager is not None:
-            mirrored_frame = numpy.fliplr(self._frame).copy()
-            self.preview_window_manager.show(mirrored_frame)
-        
+            self.show_frame()
+
         if self.is_writing_image:
             cv2.imwrite(self._image_filename, self._frame)
             self._image_filename = None
 
         self._write_video_frame()
-    
-        self._frame = None
+
+        if not self.paused:
+            self._frame = None
         self._entered_frame = False
+
+    def draw_lines(self):
+        for line in self._lines_to_draw:
+            cv2.line(self._frame, line[0], line[1], (255, 0, 0), 5)
+
+    def show_frame(self):
+        self.draw_lines()
+        self.preview_window_manager.show(self._frame)
 
     def write_image(self, filename):
         self._image_filename = filename
@@ -89,14 +98,6 @@ class CaptureManager:
         self._video_filename = None
         self._video_encoding = None
         self._video_writer = None
-
-    def stop_video(self):
-        self.video_start = false
-        self._video_start = ''
-
-    def start_video(self):
-        self.video_start = true
-        self._video_start = None
 
     def _write_video_frame(self):
         if not self.is_writing_video:
@@ -115,10 +116,10 @@ class CaptureManager:
 
 
 class WindowManager:
-    def __init__(self, window_name, keypress_callback=None, draw=None, ref=[]):
+    def __init__(self, window_name, keypress_callback=None):
         self.keypress_callback = keypress_callback
-        self.draw = draw
-        self._ref = ref
+        self._refs = []
+        self._current_ref = []
         self._window_name = window_name
         self._window_created = False
 
@@ -133,7 +134,7 @@ class WindowManager:
 
     def show(self, frame):
         cv2.imshow(self._window_name, frame)
-    
+
     def destroy_window(self):
         cv2.destroyWindow(self._window_name)
         self._window_created = False
@@ -146,11 +147,10 @@ class WindowManager:
 
     def click(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            self._ref = [(x, y)]
+            self._current_ref = [(x, y)]
         elif event == cv2.EVENT_LBUTTONUP:
-            self._ref.append((x, y))
-            print(self._ref)
-            #self.draw(self._ref)
+            self._current_ref.append((x, y))
+            self._refs.append(self._current_ref)
 
-
-
+    def get_refs(self):
+        return self._refs
