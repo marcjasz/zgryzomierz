@@ -79,7 +79,7 @@ class CaptureManager:
 
     def draw_lines(self):
         for line in self._lines_to_draw:
-            cv2.line(self._frame, line[0], line[1], (255, 0, 0), 5)
+            cv2.rectangle(self._frame, line[0], line[1], (255, 0, 0), 5)
 
     def show_frame(self):
         self.draw_lines()
@@ -153,4 +153,5 @@ class WindowManager:
             self._refs.append(self._current_ref)
 
     def get_refs(self):
-        return self._refs
+        new_refs, self._refs = self._refs, []
+        return new_refs

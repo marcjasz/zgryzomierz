@@ -1,8 +1,9 @@
 import cv2
 from managers import WindowManager, CaptureManager
+from meanshift_tracker import MeanshiftTracker
 
 class App:
-    def __init__(self):
+    def __init__(self, tracker):
         self._window_manager = WindowManager(
             'App', self.on_keypress
         )
@@ -10,6 +11,7 @@ class App:
             cv2.VideoCapture('data/P1.mp4'), self._window_manager, scale = 0.25
         )
         self._track_marks = []
+        self._tracker = tracker
 
     def run(self):
         self._window_manager.create_window()
@@ -19,10 +21,17 @@ class App:
         while self._window_manager.window_created and frame is not None:
             frame = next(frame_generator)
 
-            self._track_marks = self._window_manager.get_refs()
+            new_refs = self._window_manager.get_refs()
+            if new_refs:
+                self._track_marks.extend(new_refs)
+                for ref in new_refs:
+                    self._tracker.add_mark(ref, frame)
+
+            if not self._capture_manager.paused:
+                self._track_marks = self._tracker.track(frame)
+
             self._capture_manager.add_lines(self._track_marks)
             self._window_manager.process_events()
-            #zaznaczanie
 
     def frames(self):
         while True:
@@ -56,4 +65,4 @@ class App:
 
 
 if __name__ == "__main__":
-    App().run()
+    App(MeanshiftTracker()).run()
