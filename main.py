@@ -3,15 +3,17 @@ from managers import WindowManager, CaptureManager
 from meanshift_tracker import MeanshiftTracker
 
 class App:
-    def __init__(self, tracker):
+    def __init__(self, create_tracker_fun):
         self._window_manager = WindowManager(
             'App', self.on_keypress
         )
         self._capture_manager = CaptureManager(
+            # cv2.VideoCapture(0), self._window_manager, scale = 1
             cv2.VideoCapture('data/P1.mp4'), self._window_manager, scale = 0.25
         )
         self._track_marks = []
-        self._tracker = tracker
+        self._create_tracker_fun = create_tracker_fun
+        self._multi_tracker = cv2.MultiTracker_create()
 
     def run(self):
         self._window_manager.create_window()
@@ -21,17 +23,26 @@ class App:
         while self._window_manager.window_created and frame is not None:
             frame = next(frame_generator)
 
-            new_refs = self._window_manager.get_refs()
+            new_refs = [self.ref_to_roi(ref) for ref in self._window_manager.get_refs()]
             if new_refs:
                 self._track_marks.extend(new_refs)
+            if self._track_marks:
+                self._capture_manager.add_rois(self._track_marks)
                 for ref in new_refs:
-                    self._tracker.add_mark(ref, frame)
+                    self._multi_tracker.add(self._create_tracker_fun(), frame, ref)
 
-            if not self._capture_manager.paused:
-                self._track_marks = self._tracker.track(frame)
-
-            self._capture_manager.add_lines(self._track_marks)
+            ok, rois = self._multi_tracker.update(frame)
+            if ok:
+                self._capture_manager.add_rois(rois)
+            else:
+                print("Tracking failure")
             self._window_manager.process_events()
+
+    def ref_to_roi(self, mark):
+        min_x, max_x = sorted([mark[0][0], mark[1][0]])
+        min_y, max_y = sorted([mark[0][1], mark[1][1]])
+
+        return (min_x, min_y, max_x-min_x, max_y-min_y)
 
     def frames(self):
         while True:
@@ -52,10 +63,10 @@ class App:
             else:
                 print("recording finished")
                 self._capture_manager.stop_writing_video()
-        elif keycode == 27: #escape
+        elif keycode == 27: # escape
             print("exiting")
             self._window_manager.destroy_window()
-        elif keycode == 0x0D: #enter
+        elif keycode == 0x0D: # enter
             if not self._capture_manager.paused:
                 print("stop film")
                 self._capture_manager.paused = True
@@ -65,4 +76,5 @@ class App:
 
 
 if __name__ == "__main__":
-    App(MeanshiftTracker()).run()
+    # App(cv2.TrackerKCF_create).run()
+    App(cv2.TrackerMedianFlow_create).run()
