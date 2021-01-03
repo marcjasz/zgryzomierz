@@ -1,6 +1,6 @@
 import cv2
 from managers import WindowManager, CaptureManager
-from meanshift_tracker import MeanshiftTracker
+from detector import detect
 
 class App:
     def __init__(self, create_tracker_fun):
@@ -19,17 +19,13 @@ class App:
         self._window_manager.create_window()
         frame_generator = self.frames()
         frame = next(frame_generator)
-        self._capture_manager.paused = True
+        self._capture_manager.paused = False
+        for ref in detect(frame):
+            self._track_marks.append(ref)
+            self._multi_tracker.add(self._create_tracker_fun(), frame, ref)
+
         while self._window_manager.window_created and frame is not None:
             frame = next(frame_generator)
-
-            new_refs = [self.ref_to_roi(ref) for ref in self._window_manager.get_refs()]
-            if new_refs:
-                self._track_marks.extend(new_refs)
-            if self._track_marks:
-                self._capture_manager.add_rois(self._track_marks)
-                for ref in new_refs:
-                    self._multi_tracker.add(self._create_tracker_fun(), frame, ref)
 
             ok, rois = self._multi_tracker.update(frame)
             if ok:
@@ -76,5 +72,4 @@ class App:
 
 
 if __name__ == "__main__":
-    # App(cv2.TrackerKCF_create).run()
     App(cv2.TrackerMedianFlow_create).run()
