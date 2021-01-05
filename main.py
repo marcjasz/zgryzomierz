@@ -72,11 +72,8 @@ class App:
         #b = math.dist([rois[0][0], rois[0][1] + 0.5 * rois[0][3]], [rois[1][0], rois[1][1] + 0.5 * rois[1][3]])
         c = b / math.cos(math.radians(self._angle_change[-1]))
         a = c * math.sin(math.radians(self._angle_change[-1]))
-        if self._angle_change[-1] > 0:
-            #print(str(a) + 'hdkhhkjdkj')
-            new_y = rois[0][1] + 0.5*rois[0][3] + a
-        else:
-            new_y = rois[0][1] + 0.5 * rois[0][3] - a
+        new_y = rois[0][1] + 0.5*rois[0][3] + a
+
         return new_y
 
 
