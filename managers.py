@@ -21,6 +21,7 @@ class CaptureManager:
         self._frames_elapsed = 0
         self._fps_estimate = None
         self._rois_to_draw = []
+        self._angle_to_draw = []
         self._size = (int(scale * self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
                       int(scale * self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
@@ -51,6 +52,9 @@ class CaptureManager:
 
     def add_rois(self, rois):
         self._rois_to_draw = rois
+
+    def add_angle(self, angles):
+           self._angle_to_draw = angles
 
     def exit_frame(self):
         if self.frame is None:
@@ -83,9 +87,17 @@ class CaptureManager:
             p2 = (int(roi[0] + roi[2]), int(roi[1] + roi[3]))
             cv2.rectangle(self._frame, p1, p2, (255, 0, 0), 2)
 
+    def draw_line(self):
+        for roi in self._angle_to_draw:
+            p1 = (int(roi[0]), int(roi[1]))
+            p2 = (int(roi[2]), int(roi[3]))
+            cv2.line(self._frame, p1, p2, (255, 255, 0), 1)
+
     def show_frame(self):
         self.draw_rois()
+        self.draw_line()
         self.preview_window_manager.show(self._frame)
+
 
     def write_image(self, filename):
         self._image_filename = filename
@@ -153,6 +165,7 @@ class WindowManager:
         elif event == cv2.EVENT_LBUTTONUP:
             self._current_ref.append((x, y))
             self._refs.append(self._current_ref)
+            print(self._current_ref)
 
     def get_refs(self):
         new_refs, self._refs = self._refs, []
