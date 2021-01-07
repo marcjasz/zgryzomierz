@@ -21,7 +21,7 @@ class CaptureManager:
         self._frames_elapsed = 0
         self._fps_estimate = None
         self._rois_to_draw = []
-        self._angle_to_draw = []
+        self._lines_to_draw = []
         self._size = (int(scale * self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
                       int(scale * self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
@@ -53,8 +53,8 @@ class CaptureManager:
     def add_rois(self, rois):
         self._rois_to_draw = rois
 
-    def add_angle(self, angles):
-           self._angle_to_draw = angles
+    def add_lines(self, lines):
+        self._lines_to_draw = lines
 
     def exit_frame(self):
         if self.frame is None:
@@ -83,21 +83,21 @@ class CaptureManager:
 
     def draw_rois(self):
         for roi in self._rois_to_draw:
-            p1 = (int(roi[0]), int(roi[1]))
-            p2 = (int(roi[0] + roi[2]), int(roi[1] + roi[3]))
+            p1, p2 = roi.corners
+            p1 = tuple(map(int, p1.coords))
+            p2 = tuple(map(int, p2.coords))
             cv2.rectangle(self._frame, p1, p2, (255, 0, 0), 2)
 
-    def draw_line(self):
-        for roi in self._angle_to_draw:
-            p1 = (int(roi[0]), int(roi[1]))
-            p2 = (int(roi[2]), int(roi[3]))
+    def draw_lines(self):
+        for p1, p2 in self._lines_to_draw:
+            p1 = tuple(map(int, p1.coords))
+            p2 = tuple(map(int, p2.coords))
             cv2.line(self._frame, p1, p2, (255, 255, 0), 1)
 
     def show_frame(self):
         self.draw_rois()
-        self.draw_line()
+        self.draw_lines()
         self.preview_window_manager.show(self._frame)
-
 
     def write_image(self, filename):
         self._image_filename = filename
