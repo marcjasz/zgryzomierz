@@ -4,6 +4,7 @@ import numpy as np
 from skimage.segmentation import clear_border
 from skimage.measure import label, regionprops
 from skimage.morphology import closing, square, erosion
+from geometry import Rectangle
 
 def detect(frame, inverse_mask=False):
     img = frame
@@ -24,14 +25,9 @@ def detect(frame, inverse_mask=False):
     rois = []
     for region in regionprops(label_image):
         if region.area > 1600:
-            min_y, min_x, max_y, max_x = region.bbox
-            rois.append((min_x, min_y, max_x-min_x, max_y-min_y))
+            rois.append(Rectangle.from_bbox(region.bbox))
 
     if len(rois) == 1:
-        roi = rois[0]
-        rois = [
-            (roi[0], roi[1], roi[2]//2, roi[3]),
-            (roi[0] + roi[2]//2, roi[1], roi[2]//2, roi[3])
-        ]
+        rois = [*rois[0].vertical_split()]
 
     return rois
