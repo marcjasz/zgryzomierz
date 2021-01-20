@@ -6,7 +6,7 @@ class CaptureManager:
     def __init__(self,
                  capture,
                  preview_window_manager = None,
-                 scale = 1.0):
+                 width = 640):
         self.preview_window_manager = preview_window_manager
         self.paused = False
         self._capture = capture
@@ -22,8 +22,10 @@ class CaptureManager:
         self._fps_estimate = None
         self._rois_to_draw = []
         self._lines_to_draw = []
-        self._size = (int(scale * self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                      int(scale * self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        self._size = (
+            width,
+            int(width * self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT) / self._capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        )
 
     @property
     def frame(self):
@@ -103,8 +105,9 @@ class CaptureManager:
         self._image_filename = filename
 
     def start_writing_video(
-        self, filename,
-        encoding = cv2.VideoWriter_fourcc('I', '4', '2', '0')):
+            self, filename,
+            encoding = cv2.VideoWriter_fourcc('I', '4', '2', '0')
+        ):
         self._video_filename = filename
         self._video_encoding = encoding
 
