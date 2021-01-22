@@ -18,8 +18,8 @@ class MyCaptureManager:
         self._fps_estimate = None
         self._rois_to_draw = []
         self._lines_to_draw = []
-        self._size = (int(self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)*0.25),
-                      int(self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)*0.25))
+        self._size = (480,
+                      int(480 * self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT) / self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)))
         # self._size = (int(scale * self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
         #             int(scale * self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 

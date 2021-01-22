@@ -84,7 +84,7 @@ class App:
 
 
     def update(self):
-        if not self.queue_frame.empty() or self.finish.empty():
+        if self.finish.empty():
             self.data_frame.append(self.queue_frame.get())
             self.data_angle.append(self.queue_angle.get())
             self.data_distance.append(self.queue_distance.get())
@@ -123,7 +123,10 @@ class App:
             id = numpy.argmax(self.data_distance_max)
             self.compare = self.data_height[id] * unit
             for i in range(1, len(self.data_distance)):
-                self.data_distance[i] = self.data_distance[i] * self.compare/self.data_height[i]
+                if self.data_height[i] != 0:
+                    self.data_distance[i] = self.data_distance[i] * self.compare/self.data_height[i]
+                else:
+                    self.data_distance[i] = self.data_distance[i-1]
             fig, axs = self.create_graph(False, 0, len(self.data_angle))
         else:
             fig, axs = self.create_graph(True, 0, len(self.data_angle))
