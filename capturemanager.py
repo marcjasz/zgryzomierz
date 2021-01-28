@@ -1,7 +1,7 @@
 import cv2
 import time
 
-class MyCaptureManager:
+class CaptureManager:
     def __init__(self, capture, queue):
         self.queue = queue
         self.paused = False
